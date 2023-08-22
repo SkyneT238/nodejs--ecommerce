@@ -17,7 +17,7 @@ class AccessService {
         try {
         // check email exits 
         
-        const holderShop =  await shopModel.findOne({email}).lean(); // lean() return js object --helpfull to reduce size of return
+        const holderShop =  false;
         if(holderShop)
         {
             return {
