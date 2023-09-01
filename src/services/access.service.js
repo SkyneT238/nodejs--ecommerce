@@ -6,7 +6,7 @@ const crypto = require('crypto')
 const KeyTokenService = require("./keyToken.services")
 const { createTokenPair } = require("../auth/authUtils")
 const {getInfoData} = require("../utils/index")
-const { BadRequestError } = require("../core/error.response")
+const { BadRequestError, ConflictRequestError } = require("../core/error.response")
 
 const RoleShop = {
     SHOP : '0001',
@@ -23,7 +23,7 @@ class AccessService {
 
         if(holderShop)
         {
-           throw new BadRequestError('Error: Shop already exits ')
+           throw new ConflictRequestError('Error: Shop already exits ')
         }
         
         const passwordHash = await bcrypt.hash(password,10);
