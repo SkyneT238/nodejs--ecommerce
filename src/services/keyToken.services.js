@@ -23,7 +23,7 @@ class KeyTokenService {
             //advanced case 
             const publicKeyString = publicKey.toString();
             const filter = {user : userId}, update = { 
-                publicKey:publicKeyString,refreshTokensUsed : [] , refreshToken
+                publicKey:publicKeyString,refreshTokensUsed : [] //refreshToken
             }, options = {upsert : true, new : true};
             // if exits it will be update , otherwise it will be insert
 

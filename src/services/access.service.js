@@ -6,8 +6,11 @@ const crypto = require('crypto')
 const KeyTokenService = require("./keyToken.services")
 const { createTokenPair } = require("../auth/authUtils")
 const {getInfoData} = require("../utils/index")
-const { BadRequestError, ConflictRequestError } = require("../core/error.response")
+const { BadRequestError, ConflictRequestError, AuthFailureError } = require("../core/error.response")
+const { findByEmail } = require("./shop.service")
 
+
+/// Service ///
 const RoleShop = {
     SHOP : '0001',
     WRITER :'0002',
@@ -15,6 +18,58 @@ const RoleShop = {
     ADMIN : '0004'
 }
 class AccessService {
+
+
+    /*
+        login state 
+        1 check email in database 
+           1.1 match password 
+           create at vs rt and save
+           generate tokens 
+           get data return login 
+         
+    */
+    static login = async({email, password}) =>{ //,refreshToken = null
+        const foundShop = await findByEmail({email});
+        if(!foundShop) throw new BadRequestError("Shop not found");
+
+        const match = bcrypt.compare(password, foundShop.password);
+        if(!match) throw new AuthFailureError("Error login");
+
+        const {privateKey,publicKey} = crypto.generateKeyPairSync('rsa',{
+            modulusLength: 4096,
+            publicKeyEncoding:{
+                type:'pkcs1',
+                format:'pem'
+            },
+            privateKeyEncoding:{
+                type:'pkcs1',
+                format:'pem'
+            },
+
+        });
+
+        const publicKeyString = await KeyTokenService.createKeyToken({
+            userId : foundShop._id,
+            publicKey
+        });
+
+        const tokens = await  createTokenPair({userId: foundShop._id,email},publicKeyString,privateKey);
+
+        await KeyTokenService.createKeyToken({
+            refreshToken : tokens.refreshToken, 
+            publicKeyString
+        });
+
+        return {
+            metadata : {
+                shop : getInfoData({fields:['_id','name','email'],object: foundShop}),
+                tokens
+            }
+        }
+
+
+    }
     static signUP = async ({name,email,password}) =>{
        
         // check email exits 
